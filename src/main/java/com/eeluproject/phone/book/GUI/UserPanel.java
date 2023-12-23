@@ -1,0 +1,1051 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
+package com.eeluproject.phone.book.GUI;
+
+import com.eeluproject.phone.book.Classes.Admin;
+import com.eeluproject.phone.book.Classes.BookedContact;
+import com.eeluproject.phone.book.Classes.Contact;
+import com.eeluproject.phone.book.Classes.User;
+import com.eeluproject.phone.book.Classes.Validator;
+import com.eeluproject.phone.book.Utils.CountryUtils;
+import com.eeluproject.phone.book.Utils.Utils;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.*;
+
+/**
+ *
+ * @author algho
+ */
+public class UserPanel extends javax.swing.JFrame {
+
+  private static User user = null;
+
+  // DefaultTableModel bookedModel = (DefaultTableModel) booked.getModel();
+
+  private static void populateBookedTable() {
+    DefaultTableModel bookedModel = (DefaultTableModel) booked.getModel();
+    bookedModel.setRowCount(0); // Clear existing rows
+    ArrayList<Contact> contacts = BookedContact.getValidContacts(user);
+    // foreach brought to you by JavaScript
+    contacts.forEach(contact -> {
+      bookedModel.addRow(
+        new Object[] {
+          contact.getEmail(),
+          contact.getName(),
+          contact.getPhone(),
+          contact.getAddress(),
+          contact.getId(),
+        }
+      );
+    });
+
+    // Notify the table model that the data has changed
+    SwingUtilities.invokeLater(() -> bookedModel.fireTableDataChanged());
+  }
+
+  private static void populateBookedTable(String s) {
+    DefaultTableModel bookedModel = (DefaultTableModel) booked.getModel();
+
+    bookedModel.setRowCount(0); // Clear existing rows
+    ArrayList<Contact> contacts = BookedContact.filterhBooked(s);
+
+    // foreach brought to you by JavaScript
+    contacts.forEach(contact -> {
+      // Check if either phone or email matches the search string
+      bookedModel.addRow(
+        new Object[] {
+          contact.getEmail(),
+          contact.getName(),
+          contact.getPhone(),
+          contact.getAddress(),
+          contact.getId(),
+        }
+      );
+    });
+    // Notify the table model that the data has changed
+    SwingUtilities.invokeLater(() -> bookedModel.fireTableDataChanged());
+  }
+
+  private static void populateBookedTable(ArrayList<Contact> contacts) {
+    DefaultTableModel bookedModel = (DefaultTableModel) booked.getModel();
+
+    bookedModel.setRowCount(0); // Clear existing rows
+    ArrayList<Contact> contacts1 = Utils.quickSortNames(contacts);
+    System.out.println(contacts1.get(0).getName());
+
+    // foreach brought to you by JavaScript
+    contacts1.forEach(contact -> {
+      // Check if either phone or email matches the search string
+      bookedModel.addRow(
+        new Object[] {
+          contact.getEmail(),
+          contact.getName(),
+          contact.getPhone(),
+          contact.getAddress(),
+          contact.getId(),
+        }
+      );
+    });
+    // Notify the table model that the data has changed
+    SwingUtilities.invokeLater(() -> bookedModel.fireTableDataChanged());
+  }
+
+  private void changeInputFields() {
+    booked
+      .getSelectionModel()
+      .addListSelectionListener(
+        new ListSelectionListener() {
+          @Override
+          public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+              int selectedRow = booked.getSelectedRow();
+              if (selectedRow != -1) {
+                String username = booked.getValueAt(selectedRow, 1).toString();
+                String phoneValue = booked
+                  .getValueAt(selectedRow, 2)
+                  .toString();
+                String addressValue = booked
+                  .getValueAt(selectedRow, 3)
+                  .toString();
+
+                // Set the values in the text fields
+                phoneNumber.setText(phoneValue);
+                Name.setText(username);
+                addressF.setText(addressValue);
+              }
+            }
+          }
+        }
+      );
+  }
+
+  /**
+   * Creates new form NewJFrame
+   */
+  public UserPanel(User _user) {
+    user = _user;
+    initComponents();
+    booked.removeColumn(booked.getColumnModel().getColumn(4));
+    setTitle("Book Phone"); // Set the title of the JFrame
+    ImageIcon icon = new ImageIcon(
+      "/com/eeluproject/phone/book/Assets/Icons/4298389.png"
+    );
+    setIconImage(icon.getImage()); // Set the program icon
+    populateBookedTable();
+
+    allowedCountry.setText(
+      "Allowed Country : " + CountryUtils.getCountryAndCode()
+    );
+    ID.setText("Your ID : " + String.valueOf(user.getId()));
+    changeInputFields();
+  }
+
+  /**
+   * This method is called from within the constructor to initialize the form.
+   * WARNING: Do NOT modify this code. The content of this method is always
+   * regenerated by the Form Editor.
+   */
+  private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) { // GEN-FIRST:event_jLabel1MouseClicked
+    System.exit(0);
+  } // GEN-LAST:event_jLabel1MouseClicked
+
+  private void LogoutActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_LogoutActionPerformed
+    LoginPanel LoginFrame = new LoginPanel();
+    LoginFrame.setVisible(true);
+    LoginFrame.pack();
+    LoginFrame.setLocationRelativeTo(null);
+    this.dispose();
+  } // GEN-LAST:event_LogoutActionPerformed
+
+  private void deleteButton1MouseClicked(java.awt.event.MouseEvent evt) {} // GEN-FIRST:event_deleteButton1MouseClicked //
+
+  // GEN-LAST:event_deleteButton1MouseClicked
+
+  private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    int rowCount = booked.getSelectedRowCount();
+    if (
+      !Utils.displayError(
+        new Validator(
+          rowCount == 1,
+          "Please select one row at a time",
+          "Invalid Input"
+        )
+      )
+    ) {
+      return;
+    }
+
+    String name = Name.getText();
+    String phone = phoneNumber.getText();
+    String address = addressF.getText();
+
+    DefaultTableModel model = (DefaultTableModel) booked.getModel();
+    int selectedRow = booked.getSelectedRow();
+    int contactId = (int) booked
+      .getModel()
+      .getValueAt(booked.getSelectedRow(), 4);
+    System.out.println(contactId);
+
+    ArrayList<Validator> inputs = new ArrayList<>(
+      Arrays.asList(
+        new Validator(
+          Utils.validatePhoneNumber(phone),
+          "Invalid phone format",
+          "Invalid input"
+        ),
+        new Validator(
+          Utils.validateName(name) && !name.isEmpty(),
+          "Invalid name",
+          "Invalid input"
+        ),
+        new Validator(
+          Utils.validateAddress(address),
+          "Invalid address: address should only consist of English letters, numbers, commas, and dots",
+          "Invalid input"
+        )
+      )
+    );
+
+    if (!Utils.displayErrors(inputs)) {
+      return;
+    }
+
+    ArrayList<Validator> validators = new ArrayList<>(
+      Arrays.asList(
+        new Validator(
+          !Utils.isDuplicated(contactId, phone),
+          "Duplicated Phone number",
+          "Invalid input"
+        )
+      )
+    );
+
+    // BookedContact.display();
+
+    if (!Utils.displayErrors(validators)) {
+      return;
+    }
+
+    // Assuming that your data model has columns like "Name", "PhoneNumber",
+    // "Address"
+    // Replace these with the actual column names in your model
+    // problem here
+    String selectedRowPhone = booked.getValueAt(selectedRow, 2).toString();
+    System.out.println(selectedRowPhone);
+    Contact contact = BookedContact.findByPhone(selectedRowPhone);
+    contact.setName(name);
+    contact.setAddress(address);
+    contact.setPhone(phone);
+    model.setValueAt(contact.getName(), selectedRow, 1);
+    model.setValueAt(contact.getPhone(), selectedRow, 2);
+    model.setValueAt(contact.getAddress(), selectedRow, 3);
+    JOptionPane.showMessageDialog(
+      null,
+      "Account has been updated",
+      "Successful update",
+      JOptionPane.INFORMATION_MESSAGE
+    );
+  }
+
+  private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_clearButtonActionPerformed
+    String name = Name.getText();
+    String phone = phoneNumber.getText();
+    String address = addressF.getText();
+
+    if (!phone.isEmpty() || !name.isEmpty() || !address.isEmpty()) {
+      Name.setText("");
+      phoneNumber.setText("");
+      addressF.setText("");
+      return;
+    }
+
+    JOptionPane.showMessageDialog(
+      null,
+      "Nothing to clear",
+      "invalid Click",
+      JOptionPane.WARNING_MESSAGE
+    );
+  } // GEN-LAST:event_clearButtonActionPerformed
+
+  private void deleteBookActionPerformed(java.awt.event.ActionEvent evt) {
+    int rowCount = booked.getRowCount();
+    int[] selectedRows = booked.getSelectedRows();
+
+    String idToDelete = JOptionPane.showInputDialog("Enter your ID:");
+    String emailToDelete = JOptionPane.showInputDialog("Enter your Email:");
+
+    ArrayList<Validator> validateSelectedRows = new ArrayList<>(
+      Arrays.asList(
+        new Validator(
+          rowCount > 0,
+          "Please Select the row you want to delete",
+          "invalid input"
+        ),
+        new Validator(
+          selectedRows.length > 0,
+          "There are no rows to delete",
+          "Invalid Input"
+        )
+      )
+    );
+
+    if (!Utils.displayErrors(validateSelectedRows)) return;
+
+    try {
+      int id = Integer.parseInt(idToDelete);
+
+      ArrayList<Validator> error = new ArrayList<>(
+        Arrays.asList(
+          new Validator(
+            BookedContact.isEmailConnected(id, emailToDelete),
+            "This id isn't associated to your email",
+            "Invalid Input"
+          ),
+          new Validator(id > 0, "Invalid id", "Invalid Input"),
+          new Validator(
+            !idToDelete.equals(null) || !idToDelete.isEmpty(),
+            "Please enter a valid Id",
+            "invalid input"
+          )
+        )
+      );
+      if (!Utils.displayErrors(error)) return;
+
+      DefaultTableModel model = (DefaultTableModel) booked.getModel();
+      for (int row : selectedRows) {
+        String phone = (String) model.getValueAt(row, 2);
+        BookedContact.deleteByPhone(phone);
+      }
+
+      populateBookedTable();
+
+      // Display a message indicating successful
+      // deletion
+      JOptionPane.showMessageDialog(
+        null,
+        "Selected bookings have been deleted successfully.",
+        "Deletion Successful",
+        JOptionPane.INFORMATION_MESSAGE
+      );
+    } catch (Exception e) {
+      e.printStackTrace();
+      JOptionPane.showMessageDialog(
+        null,
+        "Something bad happened" + e.getMessage(),
+        "Internal Error",
+        JOptionPane.ERROR_MESSAGE
+      );
+    }
+  }
+
+  // GEN-LAST:event_deleteBookActionPerformed
+
+  private void deleteButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+    String userEmail = JOptionPane.showInputDialog(
+      null,
+      "Enter your Email for confirmation:"
+    );
+    try {
+      int id = Integer.parseInt(
+        JOptionPane.showInputDialog(null, "Enter you ID:")
+      );
+      ArrayList<Validator> inputs = new ArrayList<>(
+        Arrays.asList(
+          new Validator(
+            Admin.findById(id) != null,
+            "The email isn't connected to this id",
+            "Invalid input"
+          )
+        )
+      );
+
+      if (!Utils.displayErrors(inputs)) return;
+
+      DefaultTableModel model = (DefaultTableModel) booked.getModel();
+      for (int i = 0; i < model.getRowCount(); i++) {
+        model.removeRow(i);
+      }
+      Admin.delete(userEmail);
+      JOptionPane.showMessageDialog(
+        null,
+        "Account has been deleted , redirecting....",
+        "Successful Deletion",
+        JOptionPane.INFORMATION_MESSAGE
+      );
+      SignUpPanel SignUpFrame = new SignUpPanel();
+      SignUpFrame.setVisible(true);
+      SignUpFrame.pack();
+      SignUpFrame.setLocationRelativeTo(null);
+      this.dispose();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  // GEN-LAST:event_deleteButton1ActionPerformed
+
+  private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    String name = Name.getText();
+    String phone = phoneNumber.getText();
+    String address = addressF.getText();
+
+    DefaultTableModel model = (DefaultTableModel) booked.getModel();
+    ArrayList<Validator> inputs = new ArrayList<>(
+      Arrays.asList(
+        new Validator(
+          Utils.validatePhoneNumber(phone),
+          "Invalid phone format",
+          "Invalid input"
+        ),
+        new Validator(
+          Utils.validateName(name) && !name.isEmpty(),
+          "Invalid name",
+          "Invalid input"
+        ),
+        new Validator(
+          Utils.validateAddress(address),
+          "Invalid address: address should only consist of English letters, numbers, commas, and dots",
+          "Invalid input"
+        )
+      )
+    );
+
+    if (!Utils.displayErrors(inputs)) return;
+
+    ArrayList<Validator> err1 = new ArrayList<>(
+      Arrays.asList(
+        new Validator(
+          !BookedContact.isDuplicated(phone),
+          "This Phone Number is already in the system",
+          "invalid Phone Number"
+        )
+      )
+    );
+    if (!Utils.displayErrors(err1)) return;
+
+    String loginEmail = user.getEmail();
+    Contact contact = new Contact(
+      name,
+      phone,
+      address,
+      loginEmail,
+      user.getId()
+    );
+    new BookedContact(contact);
+    model.addRow(
+      new Object[] { loginEmail, name, phone, address, contact.getId() }
+    );
+    System.out.println(CountryUtils.getCountryAndCode());
+    Name.setText("sad");
+    int n = (int) (Math.random() * 99);
+    phoneNumber.setText("010006276" + String.valueOf(n));
+    addressF.setText("sad dawg");
+  }
+
+  // GEN-LAST:event_addButtonActionPerformed
+
+  /**
+   * @param args the command line arguments
+   */
+  public static void main(String args[]) {
+    /* Set the Nimbus look and feel */
+    // <editor-fold defaultstate="collapsed" desc=" Look and feel setting code
+    // (optional) ">
+    /*
+     * If Nimbus (introduced in Java SE 6) is not available, stay with the default
+     * look and feel.
+     * For details see
+     * http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
+     */
+    try {
+      for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+        if ("Nimbus".equals(info.getName())) {
+          javax.swing.UIManager.setLookAndFeel(info.getClassName());
+          break;
+        }
+      }
+    } catch (ClassNotFoundException ex) {
+      java.util.logging.Logger
+        .getLogger(UserPanel.class.getName())
+        .log(java.util.logging.Level.SEVERE, null, ex);
+    } catch (InstantiationException ex) {
+      java.util.logging.Logger
+        .getLogger(UserPanel.class.getName())
+        .log(java.util.logging.Level.SEVERE, null, ex);
+    } catch (IllegalAccessException ex) {
+      java.util.logging.Logger
+        .getLogger(UserPanel.class.getName())
+        .log(java.util.logging.Level.SEVERE, null, ex);
+    } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+      java.util.logging.Logger
+        .getLogger(UserPanel.class.getName())
+        .log(java.util.logging.Level.SEVERE, null, ex);
+    }
+  }
+
+  /**
+   * This method is called from within the constructor to initialize the form.
+   * WARNING: Do NOT modify this code. The content of this method is always
+   * regenerated by the Form Editor.
+   */
+  @SuppressWarnings("unchecked")
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated
+  // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+  private void initComponents() {
+    jTextField2 = new javax.swing.JTextField();
+    jPanel1 = new javax.swing.JPanel();
+    userDashboard = new javax.swing.JPanel();
+    Name = new javax.swing.JTextField();
+    phoneNumber = new javax.swing.JTextField();
+    clearButton = new javax.swing.JButton();
+    addButton = new javax.swing.JButton();
+    deleteBook = new javax.swing.JButton();
+    updateButton = new javax.swing.JButton();
+    NameLable = new javax.swing.JLabel();
+    phoneLable1 = new javax.swing.JLabel();
+    addressF = new javax.swing.JTextField();
+    NameLable1 = new javax.swing.JLabel();
+    jLabel2 = new javax.swing.JLabel();
+    allowedCountry = new javax.swing.JLabel();
+    ID = new javax.swing.JLabel();
+    deleteButton1 = new javax.swing.JButton();
+    javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+    booked = new javax.swing.JTable();
+    jLabel1 = new javax.swing.JLabel();
+    Logout = new javax.swing.JButton();
+    searchPanel = new javax.swing.JPanel();
+    searchLabel = new javax.swing.JLabel();
+    searchField = new javax.swing.JTextField();
+    sortPanel = new javax.swing.JPanel();
+    sortLabel = new javax.swing.JLabel();
+    sortBookedBox = new javax.swing.JComboBox<>();
+    jLabel3 = new javax.swing.JLabel();
+    jLabel4 = new javax.swing.JLabel();
+
+    jTextField2.setText("jTextField1");
+    jTextField2.setName("jTextField2"); // NOI18N
+
+    setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+    setName("Form"); // NOI18N
+    setResizable(false);
+    getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    jPanel1.setBackground(new java.awt.Color(0, 102, 153));
+    jPanel1.setBorder(
+      new javax.swing.border.SoftBevelBorder(
+        javax.swing.border.BevelBorder.RAISED
+      )
+    );
+    jPanel1.setName("jPanel1"); // NOI18N
+    jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    userDashboard.setBackground(new java.awt.Color(0, 102, 153));
+    userDashboard.setBorder(
+      new javax.swing.border.SoftBevelBorder(
+        javax.swing.border.BevelBorder.RAISED
+      )
+    );
+    userDashboard.setForeground(new java.awt.Color(255, 255, 255));
+    userDashboard.setToolTipText("");
+    userDashboard.setFont(new java.awt.Font("Segoe UI Semibold", 1, 18)); // NOI18N
+    userDashboard.setName("userDashboard"); // NOI18N
+    userDashboard.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Name.setText("sad");
+    Name.setToolTipText("");
+    Name.setName("Name"); // NOI18N
+    userDashboard.add(
+      Name,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 361, 49)
+    );
+
+    phoneNumber.setText("01000627666");
+    phoneNumber.setName("phoneNumber"); // NOI18N
+    userDashboard.add(
+      phoneNumber,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 360, 49)
+    );
+
+    clearButton.setBackground(new java.awt.Color(240, 240, 240));
+    clearButton.setFont(new java.awt.Font("Segoe UI Semilight", 1, 14)); // NOI18N
+    clearButton.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource(
+            "/com/eeluproject/phone/book/Assets/Icons/eraser (1).png"
+          )
+      )
+    ); // NOI18N
+    clearButton.setText("Clear");
+    clearButton.setBorder(null);
+    clearButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    clearButton.setName("clearButton"); // NOI18N
+    clearButton.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          clearButtonActionPerformed(evt);
+        }
+      }
+    );
+    userDashboard.add(
+      clearButton,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 470, 165, 41)
+    );
+
+    addButton.setBackground(new java.awt.Color(240, 240, 240));
+    addButton.setFont(new java.awt.Font("Segoe UI Semilight", 1, 14)); // NOI18N
+    addButton.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/plus.png")
+      )
+    ); // NOI18N
+    addButton.setText("Book");
+    addButton.setBorder(null);
+    addButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    addButton.setName("addButton"); // NOI18N
+    addButton.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          addButtonActionPerformed(evt);
+        }
+      }
+    );
+    userDashboard.add(
+      addButton,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 470, 165, 41)
+    );
+
+    deleteBook.setBackground(new java.awt.Color(240, 240, 240));
+    deleteBook.setFont(new java.awt.Font("Segoe UI Semilight", 1, 14)); // NOI18N
+    deleteBook.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/trash-bin.png")
+      )
+    ); // NOI18N
+    deleteBook.setText("Delete Booking");
+    deleteBook.setBorder(null);
+    deleteBook.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    deleteBook.setName("deleteBook"); // NOI18N
+    deleteBook.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          deleteBookActionPerformed(evt);
+        }
+      }
+    );
+    userDashboard.add(
+      deleteBook,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 400, 165, 41)
+    );
+
+    updateButton.setBackground(new java.awt.Color(240, 240, 240));
+    updateButton.setFont(new java.awt.Font("Segoe UI Semilight", 1, 14)); // NOI18N
+    updateButton.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/update.png")
+      )
+    ); // NOI18N
+    updateButton.setText("Update");
+    updateButton.setBorder(null);
+    updateButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    updateButton.setName("updateButton"); // NOI18N
+    updateButton.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          updateButtonActionPerformed(evt);
+        }
+      }
+    );
+    userDashboard.add(
+      updateButton,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 550, 165, 41)
+    );
+
+    NameLable.setBackground(new java.awt.Color(255, 255, 255));
+    NameLable.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+    NameLable.setForeground(new java.awt.Color(255, 255, 255));
+    NameLable.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource(
+            "/com/eeluproject/phone/book/Assets/Icons/signature (1).png"
+          )
+      )
+    ); // NOI18N
+    NameLable.setLabelFor(NameLable);
+    NameLable.setText("Name");
+    NameLable.setName("NameLable"); // NOI18N
+    userDashboard.add(
+      NameLable,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 90, -1)
+    );
+
+    phoneLable1.setBackground(new java.awt.Color(255, 255, 255));
+    phoneLable1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+    phoneLable1.setForeground(new java.awt.Color(255, 255, 255));
+    phoneLable1.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/handphone.png")
+      )
+    ); // NOI18N
+    phoneLable1.setLabelFor(phoneNumber);
+    phoneLable1.setText("Phone Number");
+    phoneLable1.setName("phoneLable1"); // NOI18N
+    userDashboard.add(
+      phoneLable1,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 130, -1)
+    );
+
+    addressF.setText("sad123");
+    addressF.setToolTipText("");
+    addressF.setName("addressF"); // NOI18N
+    userDashboard.add(
+      addressF,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 320, 361, 49)
+    );
+
+    NameLable1.setBackground(new java.awt.Color(255, 255, 255));
+    NameLable1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+    NameLable1.setForeground(new java.awt.Color(255, 255, 255));
+    NameLable1.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/site.png")
+      )
+    ); // NOI18N
+    NameLable1.setLabelFor(NameLable);
+    NameLable1.setText("Address");
+    NameLable1.setName("NameLable1"); // NOI18N
+    userDashboard.add(
+      NameLable1,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 280, 100, 30)
+    );
+
+    jLabel2.setName("jLabel2"); // NOI18N
+    userDashboard.add(
+      jLabel2,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 20, -1, -1)
+    );
+
+    allowedCountry.setFont(new java.awt.Font("Segoe UI Semibold", 2, 15)); // NOI18N
+    allowedCountry.setForeground(new java.awt.Color(255, 255, 255));
+    allowedCountry.setText("Allowed Country :");
+    allowedCountry.setName("allowedCountry"); // NOI18N
+    userDashboard.add(
+      allowedCountry,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 10, 190, 20)
+    );
+
+    ID.setFont(new java.awt.Font("Segoe UI Semibold", 2, 15)); // NOI18N
+    ID.setForeground(new java.awt.Color(255, 255, 255));
+    ID.setText("ID :");
+    ID.setName("ID"); // NOI18N
+    userDashboard.add(
+      ID,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 110, 20)
+    );
+
+    deleteButton1.setBackground(new java.awt.Color(240, 240, 240));
+    deleteButton1.setFont(new java.awt.Font("Segoe UI Semilight", 1, 14)); // NOI18N
+    deleteButton1.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/trash-bin.png")
+      )
+    ); // NOI18N
+    deleteButton1.setText("Delete Account");
+    deleteButton1.setBorder(null);
+    deleteButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    deleteButton1.setName("deleteButton1"); // NOI18N
+    deleteButton1.addMouseListener(
+      new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+          deleteButton1MouseClicked(evt);
+        }
+      }
+    );
+    deleteButton1.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          deleteButton1ActionPerformed(evt);
+        }
+      }
+    );
+    userDashboard.add(
+      deleteButton1,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 550, 165, 41)
+    );
+
+    jPanel1.add(
+      userDashboard,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 50, 410, 610)
+    );
+
+    jScrollPane1.setName("jScrollPane1"); // NOI18N
+
+    booked.setBackground(new java.awt.Color(225, 225, 225));
+    booked.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+    booked.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+    booked.setModel(
+      new javax.swing.table.DefaultTableModel(
+        new Object[][] {},
+        new String[] { "Email", "Name", "Phone Number", "Address", "ID" }
+      ) {
+        Class[] types = new Class[] {
+          java.lang.String.class,
+          java.lang.String.class,
+          java.lang.String.class,
+          java.lang.String.class,
+          java.lang.String.class,
+        };
+        boolean[] canEdit = new boolean[] { false, false, false, false, true };
+
+        public Class getColumnClass(int columnIndex) {
+          return types[columnIndex];
+        }
+
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+          return canEdit[columnIndex];
+        }
+      }
+    );
+    booked.setFocusable(false);
+    booked.setGridColor(new java.awt.Color(255, 255, 255));
+    booked.setName("booked"); // NOI18N
+    booked.setRowHeight(30);
+    booked.setShowGrid(true);
+    jScrollPane1.setViewportView(booked);
+
+    jPanel1.add(
+      jScrollPane1,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 130, 640, 530)
+    );
+
+    jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    jLabel1.setText("X");
+    jLabel1.setName("jLabel1"); // NOI18N
+    jLabel1.addMouseListener(
+      new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+          jLabel1MouseClicked(evt);
+        }
+      }
+    );
+    jPanel1.add(
+      jLabel1,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(1090, 0, 30, 30)
+    );
+
+    Logout.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+    Logout.setForeground(new java.awt.Color(204, 0, 51));
+    Logout.setText("Logout");
+    Logout.setBorder(null);
+    Logout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    Logout.setName("Logout"); // NOI18N
+    Logout.setOpaque(true);
+    Logout.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          LogoutActionPerformed(evt);
+        }
+      }
+    );
+    jPanel1.add(
+      Logout,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 680, 70, 40)
+    );
+
+    searchPanel.setBorder(
+      javax.swing.BorderFactory.createLineBorder(
+        new java.awt.Color(255, 255, 255),
+        2
+      )
+    );
+    searchPanel.setForeground(new java.awt.Color(255, 255, 255));
+    searchPanel.setName("searchPanel"); // NOI18N
+    searchPanel.setOpaque(false);
+    searchPanel.setLayout(new java.awt.GridLayout(1, 2));
+
+        Logout.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        Logout.setForeground(new java.awt.Color(204, 0, 51));
+        Logout.setText("Logout");
+        Logout.setBorder(null);
+        Logout.setContentAreaFilled(false);
+        Logout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Logout.setName("Logout"); // NOI18N
+        Logout.setOpaque(true);
+        Logout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                LogoutActionPerformed(evt);
+            }
+        });
+        jPanel1.add(Logout, new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 680, 70, 40));
+
+    searchField.setToolTipText("");
+    searchField.setName("searchField"); // NOI18N
+    searchField.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          searchFieldActionPerformed(evt);
+        }
+      }
+    );
+    searchPanel.add(searchField);
+
+    jPanel1.add(
+      searchPanel,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 50, 640, 30)
+    );
+
+    sortPanel.setBorder(
+      javax.swing.BorderFactory.createLineBorder(
+        new java.awt.Color(255, 255, 255),
+        2
+      )
+    );
+    sortPanel.setName("sortPanel"); // NOI18N
+    sortPanel.setOpaque(false);
+    sortPanel.setLayout(new java.awt.GridLayout(1, 2));
+
+    sortLabel.setFont(new java.awt.Font("Segoe UI Semibold", 1, 18)); // NOI18N
+    sortLabel.setForeground(new java.awt.Color(255, 255, 255));
+    sortLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    sortLabel.setText("Sort By :");
+    sortLabel.setName("sortLabel"); // NOI18N
+    sortPanel.add(sortLabel);
+
+    sortBookedBox.setModel(
+      new javax.swing.DefaultComboBoxModel<>(
+        new String[] { "Date Added", "Name" }
+      )
+    );
+    sortBookedBox.setBorder(null);
+    sortBookedBox.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    sortBookedBox.setName("sortBookedBox"); // NOI18N
+    sortBookedBox.addActionListener(
+      new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+          sortBookedBoxActionPerformed(evt);
+        }
+      }
+    );
+    sortPanel.add(sortBookedBox);
+
+    jPanel1.add(
+      sortPanel,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 80, 640, 30)
+    );
+
+    jLabel3.setFont(new java.awt.Font("Simplified Arabic", 2, 24)); // NOI18N
+    jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel3.setText("Contact");
+    jLabel3.setName("jLabel3"); // NOI18N
+    jPanel1.add(
+      jLabel3,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 30, 410, 20)
+    );
+
+    jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 30)); // NOI18N
+    jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    jLabel4.setIcon(
+      new javax.swing.ImageIcon(
+        getClass()
+          .getResource("/com/eeluproject/phone/book/Assets/Icons/contact.png")
+      )
+    ); // NOI18N
+    jLabel4.setText("My Contacts");
+    jLabel4.setName("jLabel4"); // NOI18N
+    jPanel1.add(
+      jLabel4,
+      new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 0, 270, 40)
+    );
+
+    getContentPane()
+      .add(
+        jPanel1,
+        new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, 713)
+      );
+    jPanel1.getAccessibleContext().setAccessibleName("Book phone");
+
+    pack();
+  } // </editor-fold>//GEN-END:initComponents
+
+  private void searchFieldActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_searchFieldActionPerformed
+    if (searchField.getText().isEmpty()) {
+      populateBookedTable();
+    } else {
+      populateBookedTable(searchField.getText().toLowerCase());
+    }
+  } // GEN-LAST:event_searchFieldActionPerformed
+
+  private void sortBookedBoxActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_sortBookedBoxActionPerformed
+    System.out.println(sortBookedBox.getSelectedIndex());
+    if (sortBookedBox.getSelectedIndex() == 0) {
+      populateBookedTable();
+    } else {
+      populateBookedTable(BookedContact.getValidContacts(user));
+    }
+  } // GEN-LAST:event_sortBookedBoxActionPerformed
+
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JLabel ID;
+  private javax.swing.JButton Logout;
+  private javax.swing.JTextField Name;
+  private javax.swing.JLabel NameLable;
+  private javax.swing.JLabel NameLable1;
+  private javax.swing.JButton addButton;
+  private javax.swing.JTextField addressF;
+  private javax.swing.JLabel allowedCountry;
+  private static javax.swing.JTable booked;
+  private javax.swing.JButton clearButton;
+  private javax.swing.JButton deleteBook;
+  private javax.swing.JButton deleteButton1;
+  private javax.swing.JLabel jLabel1;
+  private javax.swing.JLabel jLabel2;
+  private javax.swing.JLabel jLabel3;
+  private javax.swing.JLabel jLabel4;
+  private javax.swing.JPanel jPanel1;
+  private javax.swing.JTextField jTextField2;
+  private javax.swing.JLabel phoneLable1;
+  private javax.swing.JTextField phoneNumber;
+  private javax.swing.JTextField searchField;
+  private javax.swing.JLabel searchLabel;
+  private javax.swing.JPanel searchPanel;
+  private javax.swing.JComboBox<String> sortBookedBox;
+  private javax.swing.JLabel sortLabel;
+  private javax.swing.JPanel sortPanel;
+  private javax.swing.JButton updateButton;
+  private javax.swing.JPanel userDashboard;
+  // End of variables declaration//GEN-END:variables
+}
